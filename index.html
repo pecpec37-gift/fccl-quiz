@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FCCLクイズ道場</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💻</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0a1628;
+  --blue-deep:#0d2144;
+  --blue:#1a3a6e;
+  --blue-mid:#1e5bb8;
+  --cyan:#2196f3;
+  --sky:#64b5f6;
+  --mist:#bbdefb;
+  --amber:#f59e0b;
+  --amber-dark:#d97706;
+  --gold:#e8b84b;
+  --emerald:#10b981;
+  --red:#ef4444;
+  --white:#f8faff;
+  --card-bg:rgba(255,255,255,0.06);
+  --card-border:rgba(100,181,246,0.18);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Noto Sans JP',sans-serif;
+  background:var(--navy);color:var(--white);
+  min-height:100vh;overflow-x:hidden;
+}
+.bg-layer{
+  position:fixed;inset:0;z-index:-2;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 80%,rgba(26,58,110,0.4) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 80% at 80% 15%,rgba(10,22,40,0.6) 0%,transparent 55%),
+    linear-gradient(150deg,#0a1628 0%,#0d2144 50%,#0a1628 100%);
+}
+.bg-deco{
+  position:fixed;right:8px;bottom:20px;
+  font-size:72px;color:rgba(33,150,243,0.012);
+  z-index:-1;pointer-events:none;
+}
+.screen{display:none;}
+.screen.active{display:flex;flex-direction:column;align-items:center;}
+
+.badge{
+  display:inline-block;
+  background:linear-gradient(135deg,var(--blue),var(--blue-mid));
+  border:1px solid rgba(100,181,246,0.35);
+  border-radius:40px;padding:5px 18px;
+  font-size:11px;letter-spacing:3px;color:var(--mist);
+  text-transform:uppercase;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--blue-mid),var(--cyan));
+  color:#fff;border:none;border-radius:50px;
+  padding:16px 48px;font-family:'Noto Sans JP',sans-serif;
+  font-size:17px;font-weight:700;letter-spacing:2px;cursor:pointer;
+  box-shadow:0 8px 28px rgba(33,150,243,0.4);
+  transition:transform .2s,box-shadow .2s;
+}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(33,150,243,0.5);}
+.btn-secondary{
+  background:rgba(255,255,255,0.08);
+  border:1.5px solid rgba(100,181,246,0.25);
+  color:var(--mist);border-radius:50px;
+  padding:13px 36px;font-family:'Noto Sans JP',sans-serif;
+  font-size:15px;font-weight:500;cursor:pointer;transition:all .2s;
+}
+.btn-secondary:hover{background:rgba(100,181,246,0.15);border-color:var(--mist);}
+.divider{width:50px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:24px auto;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+@keyframes popIn{from{opacity:0;transform:scale(.85);}to{opacity:1;transform:scale(1);}}
+@keyframes timerWarn{0%,100%{color:#ff6b6b;}50%{color:#ff0000;}}
+@keyframes maruBatsu{0%{transform:scale(.5);opacity:0;}60%{transform:scale(1.2);}100%{transform:scale(1);opacity:1;}}
+
+/* ═══ TOP ═══ */
+#top-screen{justify-content:center;min-height:100vh;padding:40px 20px 60px;text-align:center;}
+.top-title{
+  font-family:'Noto Serif JP',serif;
+  font-size:clamp(36px,8vw,68px);font-weight:900;
+  line-height:1.05;letter-spacing:-1px;margin-top:20px;
+  animation:fadeUp .7s .08s both;
+}
+.top-title span{display:block;color:var(--gold);}
+.top-sub{font-size:14px;color:var(--mist);opacity:.8;letter-spacing:1.5px;margin-top:12px;animation:fadeUp .7s .15s both;}
+.genre-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:14px;max-width:580px;width:100%;
+  margin:32px 0 28px;animation:fadeUp .7s .25s both;
+}
+@media(max-width:480px){.genre-grid{grid-template-columns:1fr;}}
+.genre-card{
+  background:var(--card-bg);border:1.5px solid var(--card-border);
+  border-radius:16px;padding:24px 18px;
+  cursor:pointer;transition:all .25s;text-align:center;position:relative;overflow:hidden;
+}
+.genre-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(100,181,246,.1),transparent);
+  opacity:0;transition:opacity .25s;
+}
+.genre-card:hover{transform:translateY(-5px);border-color:rgba(100,181,246,.5);box-shadow:0 12px 36px rgba(0,0,0,.3);}
+.genre-card:hover::before{opacity:1;}
+.genre-icon{font-size:36px;margin-bottom:10px;}
+.genre-name{font-family:'Noto Serif JP',serif;font-size:18px;font-weight:700;color:var(--white);margin-bottom:4px;}
+.genre-count{font-size:11px;color:var(--mist);opacity:.7;letter-spacing:1px;}
+.rules-box{
+  max-width:520px;width:100%;
+  background:rgba(255,255,255,.04);border:1px solid rgba(100,181,246,.12);
+  border-radius:14px;padding:20px 26px;
+  text-align:left;font-size:13px;color:var(--mist);line-height:2;
+  animation:fadeUp .7s .35s both;
+}
+.rules-box h3{font-family:'Noto Serif JP',serif;font-size:15px;color:var(--gold);margin-bottom:10px;letter-spacing:1px;}
+.ranking-link{margin-top:16px;animation:fadeUp .7s .45s both;}
+.btn-ranking{
+  background:rgba(232,184,75,.12);border:1.5px solid rgba(232,184,75,.35);
+  color:var(--gold);border-radius:50px;padding:11px 30px;
+  font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;letter-spacing:1.5px;transition:all .2s;
+}
+.btn-ranking:hover{background:rgba(232,184,75,.22);border-color:var(--gold);}
+
+/* ═══ 名前入力 ═══ */
+#name-screen{justify-content:center;min-height:100vh;padding:40px 20px;text-align:center;}
+.name-genre-title{font-family:'Noto Serif JP',serif;font-size:clamp(24px,5vw,36px);font-weight:900;margin:20px 0 6px;animation:fadeUp .5s both;}
+.name-genre-sub{font-size:13px;color:var(--mist);opacity:.7;margin-bottom:30px;animation:fadeUp .5s .05s both;}
+.name-input-wrap{animation:fadeUp .5s .1s both;}
+.name-input{
+  background:rgba(255,255,255,.08);border:2px solid rgba(100,181,246,.25);
+  border-radius:12px;padding:14px 20px;
+  font-family:'Noto Sans JP',sans-serif;font-size:18px;color:var(--white);
+  width:280px;text-align:center;outline:none;transition:border-color .2s;
+}
+.name-input:focus{border-color:var(--cyan);}
+.name-input::placeholder{color:rgba(255,255,255,.3);}
+.name-btn-wrap{margin-top:22px;display:flex;gap:14px;justify-content:center;animation:fadeUp .5s .15s both;}
+
+/* ═══ クイズ ═══ */
+#quiz-screen{min-height:100vh;padding:20px 20px 50px;max-width:740px;margin:0 auto;width:100%;}
+.quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;width:100%;}
+.qh-left{display:flex;align-items:center;gap:14px;}
+.q-num{font-family:'Noto Serif JP',serif;font-size:13px;color:var(--mist);opacity:.7;letter-spacing:2px;}
+.q-score{font-size:14px;color:var(--gold);font-weight:700;letter-spacing:1px;}
+.timer-wrap{display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:11px;color:var(--mist);opacity:.6;letter-spacing:1px;}
+.timer-num{font-family:'Noto Serif JP',serif;font-size:28px;font-weight:900;color:var(--mist);min-width:42px;text-align:right;transition:color .3s;}
+.timer-num.warn{animation:timerWarn .5s infinite;}
+.progress-bar{width:100%;height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-bottom:28px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue-mid),var(--sky));border-radius:2px;transition:width .45s ease;}
+.cat-tag{display:inline-block;font-size:11px;letter-spacing:2px;color:var(--sky);border:1px solid rgba(100,181,246,.35);border-radius:4px;padding:3px 10px;margin-bottom:12px;}
+.qtype-badge{display:inline-block;font-size:10px;font-weight:700;border-radius:20px;padding:2px 10px;margin-left:8px;vertical-align:middle;}
+.qtype-4{background:rgba(33,150,243,.25);color:var(--sky);}
+.qtype-ox{background:rgba(232,184,75,.25);color:var(--gold);}
+.question-text{font-family:'Noto Serif JP',serif;font-size:clamp(17px,3.5vw,22px);font-weight:700;line-height:1.7;color:var(--white);margin-bottom:24px;min-height:70px;}
+
+/* 4択ボタン */
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;}
+@media(max-width:500px){.options-grid{grid-template-columns:1fr;}}
+.option-btn{
+  background:rgba(255,255,255,.05);border:1.5px solid rgba(100,181,246,.18);
+  border-radius:14px;padding:17px 16px;
+  color:var(--white);font-family:'Noto Sans JP',sans-serif;
+  font-size:15px;text-align:left;cursor:pointer;
+  transition:all .2s;line-height:1.5;display:flex;align-items:flex-start;gap:10px;
+}
+.option-btn:hover:not(:disabled){background:rgba(100,181,246,.12);border-color:rgba(100,181,246,.4);transform:translateY(-2px);}
+.opt-label{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:26px;height:26px;border-radius:50%;
+  background:rgba(100,181,246,.15);color:var(--mist);
+  font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px;
+}
+.option-btn.correct{background:rgba(16,185,129,.2);border-color:#10b981;color:#6ee7b7;}
+.option-btn.correct .opt-label{background:rgba(16,185,129,.4);color:#fff;}
+.option-btn.wrong{background:rgba(239,68,68,.15);border-color:#ef4444;color:#fca5a5;}
+.option-btn.wrong .opt-label{background:rgba(239,68,68,.4);color:#fff;}
+
+/* ○×ボタン */
+.ox-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;}
+.ox-btn{
+  background:rgba(255,255,255,.05);border:2px solid rgba(100,181,246,.2);
+  border-radius:20px;padding:28px 10px;
+  font-size:clamp(48px,12vw,80px);text-align:center;cursor:pointer;
+  transition:all .25s;line-height:1;
+}
+.ox-btn:hover:not(:disabled){transform:scale(1.06);}
+.ox-btn.maru{border-color:rgba(16,185,129,.4);}
+.ox-btn.batsu{border-color:rgba(239,68,68,.4);}
+.ox-btn:hover.maru{background:rgba(16,185,129,.12);}
+.ox-btn:hover.batsu{background:rgba(239,68,68,.12);}
+.ox-btn.correct{background:rgba(16,185,129,.2);border-color:#10b981;}
+.ox-btn.wrong{background:rgba(239,68,68,.15);border-color:#ef4444;}
+.ox-btn.reveal-maru{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.3);}
+
+.feedback{margin-top:20px;padding:16px 20px;border-radius:12px;font-size:14px;line-height:1.75;opacity:0;transform:translateY(10px);transition:all .3s ease;pointer-events:none;width:100%;}
+.feedback.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+.feedback.correct-fb{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#a7f3d0;}
+.feedback.wrong-fb{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;}
+.fb-head{font-weight:700;font-size:16px;display:block;margin-bottom:6px;}
+.time-badge{display:inline-block;font-size:12px;font-weight:700;border-radius:20px;padding:2px 10px;margin-left:8px;vertical-align:middle;}
+.time-plus{background:rgba(16,185,129,.3);color:#6ee7b7;}
+.time-minus{background:rgba(239,68,68,.3);color:#fca5a5;}
+.next-btn{margin-top:22px;width:100%;background:linear-gradient(135deg,var(--blue),var(--blue-mid));color:#fff;border:none;border-radius:12px;padding:16px;font-family:'Noto Sans JP',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;cursor:pointer;opacity:0;transition:all .3s ease;pointer-events:none;}
+.next-btn.show{opacity:1;pointer-events:auto;}
+.next-btn:hover{filter:brightness(1.15);}
+
+/* ═══ 結果 ═══ */
+#result-screen{justify-content:flex-start;min-height:100vh;padding:50px 20px 80px;text-align:center;max-width:700px;margin:0 auto;width:100%;}
+.result-emoji{font-size:70px;margin-bottom:14px;animation:popIn .5s .1s both;}
+.result-title{font-family:'Noto Serif JP',serif;font-size:clamp(26px,5vw,40px);font-weight:900;animation:fadeUp .5s .15s both;}
+.result-player{font-size:14px;color:var(--mist);opacity:.75;margin-top:6px;animation:fadeUp .5s .2s both;letter-spacing:1px;}
+.score-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:28px 0;animation:fadeUp .5s .25s both;}
+.score-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:16px 22px;text-align:center;min-width:100px;}
+.sc-val{font-family:'Noto Serif JP',serif;font-size:clamp(28px,6vw,42px);font-weight:900;display:block;}
+.sc-val.gold{color:var(--gold);}
+.sc-val.green{color:var(--emerald);}
+.sc-val.blue{color:var(--sky);}
+.sc-label{font-size:11px;color:var(--mist);opacity:.65;letter-spacing:1px;margin-top:4px;display:block;}
+.result-msg{font-size:15px;color:var(--mist);opacity:.85;line-height:1.9;max-width:500px;margin:0 auto 32px;animation:fadeUp .5s .3s both;}
+.wrong-section{width:100%;max-width:680px;margin:0 auto 36px;text-align:left;animation:fadeUp .5s .4s both;}
+.wrong-section h3{font-family:'Noto Serif JP',serif;font-size:18px;color:var(--sky);margin-bottom:16px;letter-spacing:1px;padding-bottom:8px;border-bottom:1px solid rgba(100,181,246,.25);}
+.wrong-item{background:rgba(255,255,255,.04);border:1px solid rgba(100,181,246,.15);border-radius:12px;padding:18px 20px;margin-bottom:12px;}
+.wi-q{font-family:'Noto Serif JP',serif;font-size:15px;font-weight:700;color:var(--white);margin-bottom:8px;line-height:1.6;}
+.wi-wrong{font-size:13px;color:#fca5a5;margin-bottom:4px;}
+.wi-correct{font-size:14px;font-weight:700;color:#6ee7b7;margin-bottom:8px;}
+.wi-exp{font-size:13px;color:rgba(255,255,255,.6);line-height:1.7;}
+.result-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;animation:fadeUp .5s .5s both;}
+
+/* ═══ ランキング ═══ */
+#ranking-screen{min-height:100vh;padding:40px 20px 80px;max-width:700px;margin:0 auto;width:100%;text-align:center;}
+.ranking-title{font-family:'Noto Serif JP',serif;font-size:clamp(28px,6vw,44px);font-weight:900;margin:16px 0 6px;animation:fadeUp .5s both;}
+.ranking-title span{display:block;color:var(--gold);}
+.genre-tabs{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin:22px 0 26px;animation:fadeUp .5s .1s both;}
+.genre-tab{background:rgba(255,255,255,.06);border:1.5px solid rgba(100,181,246,.18);border-radius:40px;padding:8px 16px;font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:700;color:var(--mist);cursor:pointer;transition:all .2s;letter-spacing:.5px;}
+.genre-tab:hover{background:rgba(100,181,246,.15);border-color:rgba(100,181,246,.4);}
+.genre-tab.active{background:linear-gradient(135deg,var(--blue),var(--blue-mid));border-color:var(--cyan);color:#fff;box-shadow:0 4px 16px rgba(33,150,243,.35);}
+.ranking-list-wrap{width:100%;max-width:600px;margin:0 auto;animation:fadeUp .5s .15s both;}
+.ranking-empty{padding:48px 0;color:var(--mist);opacity:.5;font-size:14px;}
+.ranking-row{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.05);border:1px solid rgba(100,181,246,.12);border-radius:14px;padding:14px 18px;margin-bottom:10px;transition:transform .15s;}
+.ranking-row:hover{transform:translateX(4px);}
+.ranking-row.top1{background:linear-gradient(135deg,rgba(232,184,75,.18),rgba(232,184,75,.06));border-color:rgba(232,184,75,.4);}
+.ranking-row.top2{background:linear-gradient(135deg,rgba(100,181,246,.14),rgba(100,181,246,.04));border-color:rgba(100,181,246,.3);}
+.ranking-row.top3{background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.04));border-color:rgba(245,158,11,.25);}
+.rank-num{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:900;min-width:36px;text-align:center;}
+.rank-num.g1{color:var(--gold);}
+.rank-num.g2{color:var(--sky);}
+.rank-num.g3{color:#fbbf24;}
+.rank-num.gn{color:rgba(255,255,255,.35);font-size:16px;}
+.rank-medal{font-size:22px;min-width:28px;}
+.rank-info{flex:1;text-align:left;}
+.rank-name{font-family:'Noto Serif JP',serif;font-size:16px;font-weight:700;color:var(--white);}
+.rank-detail{font-size:12px;color:var(--mist);opacity:.65;margin-top:2px;}
+.rank-score{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:900;color:var(--gold);text-align:right;min-width:60px;}
+.rank-score span{font-size:11px;font-weight:400;color:var(--mist);opacity:.7;display:block;}
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="bg-deco">💻</div>
+
+<!-- ═══ TOP ═══ -->
+<div id="top-screen" class="screen active">
+  <div class="badge" style="animation:fadeUp .7s both">💻 FCCL QUIZ</div>
+  <h1 class="top-title">FCCL<span>クイズ道場</span></h1>
+  <p class="top-sub" style="animation:fadeUp .7s .15s both">富士通クライアントコンピューティング</p>
+  <div class="divider"></div>
+  <div class="genre-grid">
+    <div class="genre-card" onclick="selectGenre('company')">
+      <div class="genre-icon">🏢</div>
+      <div class="genre-name">会社・歴史・沿革</div>
+      <div class="genre-count">FCCL・富士通の歩み</div>
+    </div>
+    <div class="genre-card" onclick="selectGenre('fmv')">
+      <div class="genre-icon">🖥️</div>
+      <div class="genre-name">FMVシリーズ</div>
+      <div class="genre-count">DESKPOWER・BIBLO・LIFEBOOK</div>
+    </div>
+    <div class="genre-card" onclick="selectGenre('fm')">
+      <div class="genre-icon">📟</div>
+      <div class="genre-name">FMシリーズ</div>
+      <div class="genre-count">FM-8・FM-7・FM77・FM77AV</div>
+    </div>
+    <div class="genre-card" onclick="selectGenre('towns')">
+      <div class="genre-icon">🎮</div>
+      <div class="genre-name">FM TOWNSシリーズ</div>
+      <div class="genre-count">ハイパーメディアPC・マーティー</div>
+    </div>
+    <div class="genre-card" onclick="selectGenre('fmr')">
+      <div class="genre-icon">💼</div>
+      <div class="genre-name">FMRシリーズ</div>
+      <div class="genre-count">ビジネスPC・オフコン</div>
+    </div>
+    <div class="genre-card" onclick="selectGenre('other')">
+      <div class="genre-icon">📱</div>
+      <div class="genre-name">その他製品</div>
+      <div class="genre-count">タブレット・プリンター・周辺機器</div>
+    </div>
+  </div>
+  <div class="rules-box">
+    <h3>📋 ルール</h3>
+    制限時間：120秒 ／ 各ジャンル10問ランダム出題<br>
+    ✅ 正解 → <strong>+10点</strong> ＋ 時間+5秒<br>
+    ❌ 不正解 → 減点なし ＋ 時間−5秒のペナルティ<br>
+    🏆 残り時間がそのままボーナス点に加算！<br>
+    <span style="color:var(--gold)">【4択】</span>と<span style="color:var(--gold)">【○×】</span>がランダムにミックスされます
+  </div>
+  <div class="ranking-link">
+    <button class="btn-ranking" onclick="showRanking()">🏆 スコアランキングを見る</button>
+  </div>
+</div>
+
+<!-- ═══ ランキング ═══ -->
+<div id="ranking-screen" class="screen">
+  <div class="badge" style="animation:fadeUp .5s both">🏆 RANKING</div>
+  <h2 class="ranking-title">スコア<span>ランキング</span></h2>
+  <div class="genre-tabs" id="genre-tabs">
+    <button class="genre-tab active" data-genre="company" onclick="switchRankingTab('company')">🏢 会社・歴史</button>
+    <button class="genre-tab" data-genre="fmv" onclick="switchRankingTab('fmv')">🖥️ FMV</button>
+    <button class="genre-tab" data-genre="fm" onclick="switchRankingTab('fm')">📟 FM</button>
+    <button class="genre-tab" data-genre="towns" onclick="switchRankingTab('towns')">🎮 TOWNS</button>
+    <button class="genre-tab" data-genre="fmr" onclick="switchRankingTab('fmr')">💼 FMR</button>
+    <button class="genre-tab" data-genre="other" onclick="switchRankingTab('other')">📱 その他</button>
+  </div>
+  <div class="ranking-list-wrap"><div id="ranking-list"></div></div>
+  <div style="margin-top:28px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+    <button class="btn-secondary" onclick="goTop()">← トップへ</button>
+    <button onclick="clearRanking()" style="background:rgba(239,68,68,.1);border:1.5px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:50px;padding:11px 22px;font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.1)'">
+      🗑️ このジャンルの記録を削除
+    </button>
+  </div>
+</div>
+
+<!-- ═══ 名前入力 ═══ -->
+<div id="name-screen" class="screen">
+  <div class="badge" id="name-badge"></div>
+  <h2 class="name-genre-title" id="name-genre-title"></h2>
+  <p class="name-genre-sub">10問ランダム出題（4択＋○×ミックス） ／ 120秒</p>
+  <div class="name-input-wrap">
+    <input type="text" class="name-input" id="player-name" placeholder="プレイヤー名（任意）" maxlength="16">
+  </div>
+  <div class="name-btn-wrap">
+    <button class="btn-secondary" onclick="goTop()">← 戻る</button>
+    <button class="btn-primary" onclick="startQuiz()">スタート ▶</button>
+  </div>
+</div>
+
+<!-- ═══ クイズ ═══ -->
+<div id="quiz-screen" class="screen">
+  <div class="quiz-header">
+    <div class="qh-left">
+      <span class="q-num" id="q-num">Q1 / 10</span>
+      <span class="q-score" id="q-score">0 pt</span>
+    </div>
+    <div class="timer-wrap">
+      <span class="timer-label">残り</span>
+      <span class="timer-num" id="timer-num">120</span>
+      <span class="timer-label">秒</span>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div id="cat-tag" class="cat-tag"></div>
+  <div id="question-text" class="question-text"></div>
+  <div id="options-area"></div>
+  <div class="feedback" id="feedback"></div>
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()">次の問題へ →</button>
+</div>
+
+<!-- ═══ 結果 ═══ -->
+<div id="result-screen" class="screen">
+  <div class="result-emoji" id="result-emoji">💻</div>
+  <h2 class="result-title" id="result-title"></h2>
+  <p class="result-player" id="result-player"></p>
+  <div class="score-cards">
+    <div class="score-card"><span class="sc-val gold" id="r-total">0</span><span class="sc-label">TOTAL SCORE</span></div>
+    <div class="score-card"><span class="sc-val green" id="r-correct">0</span><span class="sc-label">正解数</span></div>
+    <div class="score-card"><span class="sc-val blue" id="r-bonus">0</span><span class="sc-label">時間ボーナス</span></div>
+  </div>
+  <p class="result-msg" id="result-msg"></p>
+  <div id="ranking-save-area" style="animation:fadeUp .5s .35s both;width:100%;max-width:500px;margin:0 auto 20px;"></div>
+  <div class="wrong-section" id="wrong-section"></div>
+  <div class="result-btns">
+    <button class="btn-secondary" onclick="goTop()">← トップへ</button>
+    <button class="btn-secondary" onclick="showRanking(currentGenre)">🏆 ランキング</button>
+    <button class="btn-primary" onclick="retryQuiz()">もう一度挑戦</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════
+   問題データベース
+   type:'4' = 4択、type:'ox' = ○×
+   ○×の場合 o:['○','×']、a:0=○ a:1=×
+══════════════════════════════════════════════════ */
+const DB = {
+
+/* ── 会社・歴史・沿革（25問） ── */
+company:[
+  {type:'4',q:"富士通クライアントコンピューティング株式会社（FCCL）が設立されたのはいつですか？",o:["2016年2月1日","2010年4月1日","2018年5月1日","2000年1月1日"],a:0,e:"FCCLは2016年2月1日に富士通のPC事業を分社化する形で設立されました。"},
+  {type:'4',q:"FCCLの略称が意味する英語の正式名称はどれですか？",o:["Fujitsu Client Computing Limited","Fujitsu Computer Corporation Limited","Fujitsu Client Corporation of Lenovo","Fujitsu Computing Clients Ltd"],a:0,e:"FCCLはFujitsu Client Computing Limitedの略称です。"},
+  {type:'4',q:"FCCLの筆頭株主（過半数株主）は現在どの企業ですか？",o:["レノボ（Lenovo）","富士通","日本政策投資銀行","NEC"],a:0,e:"2018年5月にレノボがFCCLの株式51%を取得し、筆頭株主となりました。富士通は44%、日本政策投資銀行は5%を保有しています。"},
+  {type:'ox',q:"FCCLの本社は東京都に所在している。",o:["○","×"],a:1,e:"FCCLの本社は神奈川県川崎市中原区にあります。R&Dセンターも同じ川崎市に置かれています。"},
+  {type:'4',q:"FCCLの設立のきっかけとなった富士通のPC事業分社化の発表はいつですか？",o:["2015年10月29日","2014年4月1日","2016年1月1日","2013年6月15日"],a:0,e:"富士通は2015年10月29日にPC事業と携帯電話事業の体制変更を発表し、同年12月24日に分社化を公表しました。"},
+  {type:'ox',q:"FCCLは1981年のFM-8発売以降、40年以上にわたりPC製品を展開してきたと自社で述べている。",o:["○","×"],a:0,e:"FCCLの公式サイトでは「1981年のFM-8発売以降、40年以上にわたり企画・開発から製造・販売・サポートに至るまで自社で一貫して担ってきた」と紹介されています。"},
+  {type:'4',q:"FCCLの経営理念として掲げているキーワードはどれですか？",o:["人に寄り添う","デジタルで世界をつなぐ","技術で未来を拓く","革新と信頼"],a:0,e:"FCCLは「少子高齢化やデジタル格差といった社会課題を抱える日本で『人に寄り添う』をテーマに取り組んでいる」と掲げています。"},
+  {type:'4',q:"FCCLの初代代表取締役社長はだれですか？",o:["齋藤邦彰","大隈健史","田中達也","山本正已"],a:0,e:"FCCLの初代社長は齋藤邦彰氏です。2021年4月1日にレノボグループ出身の大隈健史氏に社長職を引き継ぎ、齋藤氏は会長に就任しました。"},
+  {type:'ox',q:"FCCLはPC製品に加えてタブレット端末「ARROWS（アローズ）」シリーズも展開している。",o:["○","×"],a:0,e:"FCCLはFMVブランドのPC・ノートPC・タブレット「ARROWS Tab」シリーズを展開しています。"},
+  {type:'4',q:"富士通のコンピュータブランドに共通して冠されてきた「FM」は何年代から使われていますか？",o:["1980年代初頭（1981年〜）","1970年代","1990年代","2000年代"],a:0,e:"「FM」ブランドは1981年のFM-8発売時から始まり、それ以降富士通の自社マイコン・PCシリーズに一貫して使われています。"},
+  {type:'ox',q:"FCCLの製品はすべて海外で製造されている。",o:["○","×"],a:1,e:"FCCLはMade in Japanを念頭に置いたものづくりにこだわり、国内での製造・品質管理を継続しています。"},
+  {type:'4',q:"FCCLのR&Dセンターが置かれている都市はどこですか？",o:["神奈川県川崎市","東京都千代田区","大阪府大阪市","愛知県名古屋市"],a:0,e:"FCCLのR&Dセンターは神奈川県川崎市中原区下小田中に置かれています。"},
+  {type:'4',q:"FCCLが個人向けPCのサポートを直接提供するようになったのはいつ頃からですか？",o:["FCCLの新生発足（2018年5月）以降","2016年設立当初から","2021年以降","富士通時代から変わらない"],a:0,e:"2018年5月の新生FCCL発足後、個人向け製品はFCCLが量販店経由または直接顧客に販売・サポートを提供する体制になりました。"},
+  {type:'ox',q:"富士通とレノボの合弁によりFCCLが新体制（3社合弁）になったのは2018年のことである。",o:["○","×"],a:0,e:"2018年5月2日に富士通・レノボ・日本政策投資銀行の3者による新生FCCLが発足しました。"},
+  {type:'4',q:"FCCLが製造・販売する個人向けPCの主要ブランドはどれですか？",o:["FMV","VAIO","dynabook","Let's note"],a:0,e:"FCCLが展開する個人向けPCのメインブランドは「FMV」です。法人向けにはESPRIMO（デスクトップ）・LIFEBOOK（ノート）ブランドも使われます。"},
+  {type:'4',q:"FCCLの「FMV」ブランドの日付「FMVの日」として2026年に正式認定された日はいつですか？",o:["2月1日","10月18日","11月10日","1月1日"],a:0,e:"2026年1月28日にFCCLが発表し「2月1日がFMVの日として正式認定された」と公表しました。FCCLの設立日（2月1日）と同日です。"},
+  {type:'ox',q:"富士通のパソコン事業は、Windows 95の発売（1995年）頃にNECを抜いて国内シェア1位になったことがある。",o:["○","×"],a:0,e:"FMV-DESKPOWERの大ヒットとWindows 95特需により、富士通のパソコンシェアはNECを抜いて1位となりました。"},
+  {type:'4',q:"FCCLが展開するAIアシスタントキャラクターの名前はどれですか？",o:["ふくまろ","FMちゃん","AIくん","タッチくん"],a:0,e:"FCCLはAIアシスタントキャラクター「ふくまろ」を展開しています。2021年の社長交代式でも「ふくまろ」のかぶり物を使ったパフォーマンスが行われました。"},
+  {type:'4',q:"FMVの「FMV」という名前の正式な意味（公式発表）はどれですか？",o:["Fujitsu(F) / マイコン(M) / DOS/VとVictory(V)","Fujitsu Multimedia Vision","Future Mobile Vision","Fast Memory Versatile"],a:0,e:"FMVの公式な略称はFujitsuのF、マイコンのM、DOS/VとVictoryのVとされています。「Fujitsu Multimedia Vision」という異説もあります。"},
+  {type:'ox',q:"FCCLの前身となる富士通のPC部門は、FMV発売以前から「FM」ブランドのPCを展開していた。",o:["○","×"],a:0,e:"FM-8（1981年）から始まるFMシリーズが先行し、1993年にDOS/V互換機のFMVシリーズが登場しました。"},
+  {type:'4',q:"富士通が国内パソコン市場でNECのPC-9800シリーズに対抗するため投入したPC/AT互換機ブランドはどれですか？",o:["FMV","FM TOWNS","FMR","FM-7"],a:0,e:"1993年10月に発売されたFMVシリーズがDOS/V（PC/AT互換機）として投入され、NEC PC-9800シリーズへの対抗軸となりました。"},
+  {type:'4',q:"FCCLが川崎市のふるさと納税返礼品に採用されたのはいつですか？",o:["2025年8月","2020年4月","2018年10月","2023年1月"],a:0,e:"2025年8月22日にFCCLのFMV製品が川崎市のふるさと納税返礼品に採用されたと発表されました。"},
+  {type:'ox',q:"FCCLが世界最軽量のCopilot+ PCを含む2025年春モデルを発表したのは2025年1月のことである。",o:["○","×"],a:0,e:"2025年1月16日にFCCLが「世界最軽量Copilot+ PCを含む2025年春モデル」を発表しました。"},
+  {type:'4',q:"富士通がパソコン事業を本格的に開始した最初のPC（FMシリーズ第1弾）は何ですか？",o:["FM-8","FM-7","FM-11","FMV-1"],a:0,e:"富士通FMシリーズの第1弾は1981年に発売されたFM-8です。これがFCCLの歴史の出発点となっています。"},
+  {type:'ox',q:"FCCLはレノボグループに属しているが、富士通ブランドを引き続き使用している。",o:["○","×"],a:0,e:"FCCLはレノボグループの企業ですが、FMV・LIFEBOOKなどの富士通ブランドを継続使用してPC製品を展開しています。"},
+],
+
+/* ── FMVシリーズ（25問） ── */
+fmv:[
+  {type:'4',q:"FMVシリーズが最初に発売されたのはいつですか？",o:["1993年10月（発表）","1990年4月","1997年11月","2000年1月"],a:0,e:"FMVは1993年10月18日に正式発表され、デスクトップモデルは同月末、ノートモデルは11月10日から出荷が始まりました。"},
+  {type:'4',q:"FMVの大ヒット機種で1994年10月に発売されたデスクトップPCはどれですか？",o:["FMV-DESKPOWER","FMV-BIBLO","FMV-TOWNS","FMV-386"],a:0,e:"FMV-DESKPOWERは1994年10月31日に発表・発売されたデスクトップPCです。戦略的な価格設定とプロモーションが奏功して大ヒットしました。"},
+  {type:'ox',q:"FMVシリーズはPC/AT互換機（DOS/V対応）として発売された。",o:["○","×"],a:0,e:"FMVはPC/AT互換規格（DOS/V）で設計されており、富士通がOADGに正式入会するきっかけともなりました。"},
+  {type:'4',q:"FMVのノートPCシリーズで「BIBLO」の後継として現在使われているブランド名はどれですか？",o:["LIFEBOOK","ESPRIMO","ARROWS","STYLISTIC"],a:0,e:"FMV-BIBLOは2010年夏モデルからFMV LIFEBOOKに名称が変更されました。法人向けも同時にLIFEBOOKに統一されました。"},
+  {type:'4',q:"FMVのデスクトップPCブランド「DESKPOWER」が2010年以降に変更された名称はどれですか？",o:["ESPRIMO","STYLISTIC","LIFEBOOK","BIBLO"],a:0,e:"FMV-DESKPOWERは2010年夏モデルからESPRIMOに名称変更されました。現在もデスクトップPCブランドとして使われています。"},
+  {type:'ox',q:"FMV LIFEBOOKは世界最軽量クラスのノートPCとして知られている。",o:["○","×"],a:0,e:"FCCLのFMV LIFEBOOKは軽量化に特に力を入れており、2025年時点で約634gの世界最軽量Copilot+ PCを発売しています。"},
+  {type:'4',q:"FMVシリーズ発売当初のキャッチコピーはどれですか？",o:["富士通の国際標準機"FMV"","日本のパソコンが変わる","マルチメディアの新世代","人に寄り添うPC"],a:0,e:"FMV発売当初のキャッチコピーは「富士通の国際標準機"FMV"」でした。国際標準（PC/AT互換）を強調したメッセージです。"},
+  {type:'4',q:"FMVの初代マスコットキャラクターの通称は何ですか？",o:["タッチくん（後にタッチおじさん）","FMVくん","PCマン","デスクマン"],a:0,e:"1994年秋に登場したFMVのマスコットは最初「タッチくん」と呼ばれ、1995年に「タッチおじさん」に改名されました。"},
+  {type:'ox',q:"FMV-DESKPOWERの初代モデルにはSoundBlaster16とアクティブスピーカーが同梱されていた。",o:["○","×"],a:0,e:"初代FMV-DESKPOWERはマルチメディア路線でSoundBlaster16搭載・アクティブスピーカー同梱という当時としては充実した仕様でした。"},
+  {type:'4',q:"FMVの2010年夏モデル以降の「FMV」の意味（バクロニム）は何ですか？",o:["Fujitsu PC Materializes your Vision","Future Mobile Vision","Fast Memory Versatile","Fujitsu Multimedia Version"],a:0,e:"2010年夏モデルから「FMV」はF=Fujitsu PC、M=Materializes your、V=Vision.（富士通PCはあなたのやりたいことを実現します）とされています。"},
+  {type:'4',q:"FMVシリーズの生産拠点として知られ、島根県にある工場はどこですか？",o:["島根富士通（出雲全日本大学選抜駅伝のスポンサー）","富士通岡山工場","富士通九州工場","富士通北海道工場"],a:0,e:"島根富士通ではLIFEBOOKが生産されており、出雲全日本大学選抜駅伝競走のメインスポンサーとして大会副賞にLIFEBOOKが提供されています。"},
+  {type:'ox',q:"FMVのArrowsタブレットとFMVシリーズのノートPCは同じFCCLが製造・販売している。",o:["○","×"],a:0,e:"FCCLはFMVブランドのPC・ノートPC・タブレット（ARROWS Tab）を一体で展開しています。"},
+  {type:'4',q:"2025年1月にFCCLが発表した「FMV AI Plus+」はどのようなサービスですか？",o:["日本初オールインワンAIサブスクサービス","高速回線接続サービス","AI搭載ハードウェア保証サービス","法人向けクラウドストレージ"],a:0,e:"2025年1月13日に発表された「FMV AI Plus+」は、文章・画像・音声などのAI機能をワンストップで使い放題の日本初オールインワンAIサブスクサービスです。"},
+  {type:'4',q:"FMVシリーズで「らくらくパソコン」のイメージキャラクターを務めた女優はだれですか？",o:["大竹しのぶ","柴咲コウ","松田聖子","石田ゆり子"],a:0,e:"「らくらくパソコン」（シニア向けFMV）のイメージキャラクターは大竹しのぶさんです。同社の「らくらくホンシリーズ」とも連動していました。"},
+  {type:'ox',q:"FMV-DESKPOWERの大ヒットにより、富士通の1995年度のパソコン出荷台数は前年度比3倍以上に増加した。",o:["○","×"],a:0,e:"富士通のパソコン出荷台数は1994年度の45万台から1995年度には145万台と3倍以上に急増しました。"},
+  {type:'4',q:"FMVの2012年夏モデルからイメージキャラクターとして起用されたグループはどれですか？",o:["EXILE","嵐","SMAP","AKB48"],a:0,e:"FMV（ESPRIMO・LIFEBOOKブランド）は2012年夏モデルからEXILEをイメージキャラクターに起用しました。"},
+  {type:'4',q:"FMV LIFEBOOKの2025年時点の最軽量モデルの重さはどれくらいですか？",o:["約634g","約1kg","約500g","約2kg"],a:0,e:"FMV LIFEBOOK UHシリーズの最軽量モデルは約634gで、2025年時点で世界最軽量のCopilot+ PCを実現しています。"},
+  {type:'ox',q:"FMV-DESKPOWER発売当初、搭載フロッピーディスクドライブはNEC製だった。",o:["○","×"],a:0,e:"FMV-DESKPOWERの初期モデルに搭載されていたフロッピーディスクドライブはNEC製でした。当時はコスト最適化のため各社部品を活用していました。"},
+  {type:'4',q:"FMVの個人向け女性向けブランド「Floral Kiss（LIFEBOOK CHシリーズ）」のイメージキャラクターはどれですか？",o:["E-Girls","EXILE","唐沢寿明","柴咲コウ"],a:0,e:"2012年秋冬モデルから登場した「Floral Kiss」（LIFEBOOK CHシリーズ）にはE-Girlsが起用されました。"},
+  {type:'4',q:"2025年にFCCLがクラウドファンディングで開始した製品「FMV Keyboard X」の特徴はどれですか？",o:["磁気スイッチ×静音設計×ロープロファイル","折りたたみ式コンパクトキーボード","タッチスクリーン一体型","無線充電対応のゲーミングキーボード"],a:0,e:"2026年4月8日に発表された「FMV Keyboard X」は磁気スイッチ×静音設計×ロープロファイルの高品質キーボードとしてクラウドファンディングが開始されました。"},
+  {type:'ox',q:"FMV-DESKPOWERの初代モデルにはエイサー製マザーボードが採用されていた。",o:["○","×"],a:0,e:"FMV初期シリーズではエイサー（ACER）製マザーボードが採用されていました。部品の海外調達・設計委託により低価格化を実現しました。"},
+  {type:'4',q:"FMVが提供する「PC家庭教師」サービスはどのようなものですか？",o:["有料で専門スタッフが自宅に訪問するサービス","電話のみのサポートサービス","AIによる自動診断サービス","オンラインビデオ通話サポート"],a:0,e:"FCCLは「PC家庭教師」と呼ばれる有料の出張訪問サポートサービスを提供しており、自宅にスタッフが訪問してパソコンの設定や操作を支援します。"},
+  {type:'4',q:"FMVの法人向けデスクトップブランド「ESPRIMO」の読み方はどれですか？",o:["エスプリモ","エスプレッソ","エキスプレス","エクスプリモ"],a:0,e:"ESPRIMOは「エスプリモ」と読みます。2005年4月発売モデルから富士通の法人向けデスクトップブランドとして導入されました。"},
+  {type:'ox',q:"FMVシリーズが発売された1993年当時、富士通はすでにOADGの正式会員だった。",o:["○","×"],a:1,e:"FMVの発表を機に富士通はOADG（PC/AT互換機の業界団体）に正式会員として入会しました。FMV発表以前は正式会員ではありませんでした。"},
+  {type:'4',q:"2025年にFCCLが開始した学生向けプロジェクト「GOOD CAMPUS LIFE Project」で発表された取り組みはどれですか？",o:["長岡造形大学と挑む「和紙×PCケース」","東大生と共同開発したAIチップ","高校生向けプログラミング教室","大学病院向け医療PCの開発"],a:0,e:"2025年12月に発表されたGOOD CAMPUS LIFE Project Vol.2では、長岡造形大学と共同で「和紙×PCケース」を発表しました。"},
+],
+
+/* ── FMシリーズ（25問） ── */
+fm:[
+  {type:'4',q:"富士通FMシリーズの第1号機「FM-8」が発売されたのはいつですか？",o:["1981年（昭和56年）","1978年","1985年","1979年"],a:0,e:"FM-8は1981年に富士通が発売したFMシリーズ第1弾の8ビットマイコンです。「FUJITSU MICRO 8」が正式名称です。"},
+  {type:'4',q:"FM-8のCPUアーキテクチャの特徴はどれですか？",o:["メインCPUとグラフィック制御のデュアルCPU（MC6809×2）","シングルCPUの高クロック機","Z80互換CPUを採用","Intel 8088搭載"],a:0,e:"FM-8はモトローラMC6809をメインCPU用とグラフィックディスプレイサブシステム用に2基搭載したデュアルCPUアーキテクチャを採用していました。"},
+  {type:'ox',q:"FM-7はFM-8の上位機種として開発された。",o:["○","×"],a:1,e:"FM-7はFM-8の下位機種（廉価版）として1982年に開発されました。FM-8の機能を絞り込んで小型化・大幅低価格化を実現したものです。"},
+  {type:'4',q:"FM-7が発売されたのはいつですか？",o:["1982年11月8日","1981年5月","1984年3月","1985年10月"],a:0,e:"FM-7は1982年11月8日に発売されました。同日にFM-8の上位機種である16ビット機FM-11も発表されました。"},
+  {type:'4',q:"FM-7の発売価格はいくらでしたか？",o:["126,000円","256,000円","98,000円","200,000円"],a:0,e:"FM-7の本体価格は12万6千円からでした。FM-8より大幅に安く、8ビットパソコンの低価格化に火をつけた機種です。"},
+  {type:'ox',q:"FM-7はそのヒットにより富士通を「8ビット御三家」の一角に押し上げた。",o:["○","×"],a:0,e:"FM-7の大ヒットにより富士通はNECのPC-8801シリーズ、シャープのX1シリーズとともに「8ビット御三家」と呼ばれるようになりました。"},
+  {type:'4',q:"FM-7の累計出荷台数（生産終了まで）はおよそ何台ですか？",o:["約22万台","約5万台","約100万台","約1万台"],a:0,e:"FM-7は1984年4月の生産終了までに約22万台の累計出荷台数を記録し、日本のパソコン黎明期を代表するヒット商品となりました。"},
+  {type:'4',q:"FM-7/FM77のイメージキャラクターとして有名な人物はだれですか？",o:["タモリ","伊藤麻衣子（いとうまい子）","南野陽子","明石家さんま"],a:0,e:"FM-7とFM77のイメージキャラクターはタモリさんです。それ以前のFM-8のキャラクターは伊藤麻衣子さんでした。FM77AVシリーズは南野陽子さんが担当しました。"},
+  {type:'4',q:"FM-11はFM-8の何ビット上位機種として発売されましたか？",o:["16ビット","32ビット","8ビット（高性能版）","64ビット"],a:0,e:"FM-11（FUJITSU MICRO 11）は1982年11月にFM-8の上位機種として発売されたハイエンド8ビット+16ビット対応マシンです。本体価格は268,000円からでした。"},
+  {type:'ox',q:"FM-77はFM-7の後継機として1984年に発売され、3.5インチFDDを標準搭載していた。",o:["○","×"],a:0,e:"FM-77は1984年に発売されたFM-7の上位後継機で、当時主流だった5インチではなく3.5インチFDDを標準搭載した先進的な設計でした。"},
+  {type:'4',q:"FM77AV（1985年発売）の最大の特徴はどれですか？",o:["4,096色同時表示とFM音源の標準搭載","64KBのメモリ","世界初のCD-ROM内蔵","タッチパネル標準搭載"],a:0,e:"FM77AVは4,096色同時表示とFM音源標準搭載を実現した8ビットAVパソコンです。「総天然ショック（総天然色）」というキャッチコピーで発売されました。"},
+  {type:'4',q:"FM77AVシリーズのイメージキャラクターはだれですか？",o:["南野陽子","タモリ","伊藤麻衣子","沢口靖子"],a:0,e:"FM77AVシリーズのイメージキャラクターは南野陽子さんでした。FM-7/77のタモリから変更されました。"},
+  {type:'ox',q:"FM-7のCPUはIntel系のCPUを採用していた。",o:["○","×"],a:1,e:"FM-7のメインCPUはモトローラ社の8ビットプロセッサMBL68B09（MC6809互換）を採用しており、Intel系ではありませんでした。"},
+  {type:'4',q:"FM-8に搭載されていたユニークなオプション記憶装置はどれですか？",o:["バブルカセット（磁気バブルメモリ）","パンチカード","磁気ドラム","光ディスク"],a:0,e:"FM-8には磁気バブルメモリを使ったバブルカセットインターフェースがオプションで用意されていました。当時としてはユニークな記憶装置でした。"},
+  {type:'4',q:"FM77AV40EXが「墓石パソコン」と呼ばれた理由はどれですか？",o:["本体前面と上面に大理石のような塗装が施されていたから","形が墓石に似ていたから","黒一色の外観だったから","非常に重かったから"],a:0,e:"FM77AV40EXはグレー色の本体にマーブル（大理石）模様の塗装が施されており、その外観から「墓石パソコン」と呼ばれていました。"},
+  {type:'ox',q:"FM-7シリーズには3重和音機能（シンセサイザ用LSI搭載）が搭載されていた。",o:["○","×"],a:0,e:"FM-7は豊富なサウンド機能としてシンセサイザ用LSIによる3重和音機能を搭載しており、ホビーマシンとしての人気を高めました。"},
+  {type:'4',q:"FM-77L4に搭載されたオプションカードで400ラインの表示を可能にした拡張機能は何ですか？",o:["400ラインカード","漢字ROMyカード","FM音源カード","Z80カード"],a:0,e:"FM-77では標準では200ラインのグラフィック表示でしたが、オプションの400ラインカードを追加することで400ラインの高解像度表示が可能でした。"},
+  {type:'4',q:"FM77AV40はVRAMをどのくらい搭載していましたか？",o:["144KB（320×200×262,144色1画面・640×400×8色1画面）","64KB","1MB","32KB"],a:0,e:"FM77AV40はVRAM144KBを搭載し、320×200ドットで262,144色（パレットから選択）または640×400ドットで8色の表示が可能でした。"},
+  {type:'ox',q:"FM-8のバブルカセットはFM-7でもそのまま使用できた。",o:["○","×"],a:1,e:"FM-8のバブルカセットはFM-7と物理形状が異なるため互換性がなく、FM-7では使用できませんでした。"},
+  {type:'4',q:"FM-7シリーズの最終機（FM-7シリーズ最後の機種）はどれですか？",o:["FM77AV40SX","FM77AV40EX","FM-NEW7","FM-77L4"],a:0,e:"FM77AV40SX（1988年11月発売）がFM-7シリーズの最終機です。FM77AV40EXのマイナーチェンジモデルで、ビデオディジタイズ機能を標準装備していました。"},
+  {type:'4',q:"FM-7の開発が行われた富士通の事業部門はどれですか？",o:["半導体事業部門","コンピュータ事業部門","通信事業部門","家電事業部門"],a:0,e:"FM-7は富士通の半導体事業部門が開発しました。当時の同部門の専務取締役・安福眞民氏は「累計10万台行けばいい」と想定していたとされています。"},
+  {type:'ox',q:"FM-7はFM-8と完全な上位互換性を持っていた。",o:["○","×"],a:1,e:"FM-7はFM-8の下位機種として機能を絞り込んだもので、バブルカセットの削除など一部機能が省かれており、完全な上位互換ではありませんでした。"},
+  {type:'4',q:"FM-7発売後に低価格化したFM-8の廉価版に相当するFM-7シリーズの廉価モデルはどれですか？",o:["FM-NEW7","FM77AV","FM-8D","FM-1"],a:0,e:"FM-NEW7はFM-7の機能・互換性を維持しながら高集積メモリとゲートアレイLSIによってさらに低価格化（99,800円）を実現したモデルです。"},
+  {type:'4',q:"FM-11の本体価格（発売時）はどれくらいでしたか？",o:["268,000円から","126,000円","98,000円","398,000円"],a:0,e:"FM-11（FUJITSU MICRO 11）の本体価格は268,000円からでした。ビジネス向けの高性能機として高価格帯でした。"},
+  {type:'ox',q:"FM77AVシリーズにはFM音源が標準装備されていたが、FM-7にはFM音源が搭載されていなかった。",o:["○","×"],a:0,e:"FM77AVにはFM音源が標準搭載されましたが、FM-7本体にはFM音源が搭載されておらず、後にFM音源カードがオプションとして発売されました。"},
+],
+
+/* ── FM TOWNSシリーズ（25問） ── */
+towns:[
+  {type:'4',q:"FM TOWNSが発表・発売されたのはいつですか？",o:["1989年2月28日","1985年3月","1991年4月","1993年10月"],a:0,e:"FM TOWNSは1989年2月28日に富士通が発表した、世界初のCD-ROMドライブ標準搭載32ビットマルチメディアパソコンです。"},
+  {type:'4',q:"FM TOWNSに採用されたCPUはどれですか？",o:["Intel 80386（i80386）","Intel 8086","MC6809","Intel 486"],a:0,e:"FM TOWNSにはIntelの32ビットCPU i80386が採用されました。当時のコンシューマ向けパソコンへの32ビットCPU採用は画期的でした。"},
+  {type:'ox',q:"FM TOWNSは世界で初めてCD-ROMドライブを標準搭載したパソコンである。",o:["○","×"],a:0,e:"FM TOWNSは1989年に世界で初めてCD-ROMドライブを標準搭載したパソコンです。これがFM TOWNSの最大の歴史的意義のひとつです。"},
+  {type:'4',q:"FM TOWNSのキャッチコピーはどれですか？",o:["ハイパーメディアパソコン","マルチメディアの王様","デジタルエンターテイメント","32ビットの未来"],a:0,e:"FM TOWNSのキャッチコピーは「ハイパーメディアパソコン」でした。マルチメディアよりも一歩先の「ハイパーメディア」を標榜していました。"},
+  {type:'4',q:"初代FM TOWNS（モデル1）の発売価格はいくらでしたか？",o:["338,000円","198,000円","498,000円","258,000円"],a:0,e:"初代FM TOWNS（FDD1基搭載のモデル1）の価格は338,000円、FDD2基搭載のモデル2は398,000円でした。"},
+  {type:'ox',q:"FM TOWNSには専用OS「TOWNS OS」が搭載されていた。",o:["○","×"],a:0,e:"FM TOWNSには独自仕様の「TOWNS OS」が搭載されていました。後にWindows 3.1にも対応しました。"},
+  {type:'4',q:"FM TOWNSのカラーは最大何色同時表示が可能でしたか？",o:["32,768色（または256色選択表示）","4,096色","65,536色","16色"],a:0,e:"FM TOWNSは640×480ドットで32,768色同時表示、またはパレットから1,677万色中256色選択表示が可能でした。"},
+  {type:'4',q:"FM TOWNSの家庭用コンシューマー版「FM TOWNS マーティー」が発売されたのはいつですか？",o:["1993年2月20日","1989年3月","1991年10月","1995年4月"],a:0,e:"FM TOWNS マーティーは1993年2月20日に発売されたコンシューマ向けのCD-ROMプレイヤー兼ゲーム機です。"},
+  {type:'4',q:"FM TOWNS マーティーのイメージキャラクターはどれですか？",o:["ワニの「Mr.T」","パンダ","ロボット「TOWNSくん」","宇宙人"],a:0,e:"FM TOWNS マーティーのイメージキャラクターはワニの「Mr.T」で、郵便局の簡易保険のCMにも登場していました。"},
+  {type:'ox',q:"FM TOWNSにはスプライト機能が搭載されていた。",o:["○","×"],a:0,e:"FM TOWNSには640×480ドットのカラーグラフィックに加えてスプライト機能も搭載されており、ゲームソフトに有利な仕様となっていました。"},
+  {type:'4',q:"FM TOWNSに搭載されたPCM音源のチャンネル数はいくつですか？",o:["8チャンネル","4チャンネル","2チャンネル","16チャンネル"],a:0,e:"FM TOWNSには8チャンネルのPCM音源が標準搭載されていました。加えてFM音源も搭載しており、当時のパソコンとしては最高水準のサウンド機能でした。"},
+  {type:'4',q:"FM TOWNSシリーズの最後の製品が発売されたのはいつ頃ですか？",o:["1997年頃","1992年","2000年","1989年末"],a:0,e:"FM TOWNSシリーズは1997年の製品を最後に、FMVシリーズに吸収統合される形で終了しました。"},
+  {type:'ox',q:"FM TOWNSにはイースシリーズ（日本ファルコム）のゲームが発売されていた。",o:["○","×"],a:1,e:"FM TOWNSには当時大人気だったイースシリーズのゲームが一作も発売されませんでした。これはFM TOWNSの逸話として知られています。"},
+  {type:'4',q:"FM TOWNSの末期に登場した「FMV-TOWNS」はどのような製品ですか？",o:["FMVのPCIスロットにTOWNSカードを搭載したハイブリッド機","FM TOWNSにFMVのデザインを適用した製品","完全にFMVに統合されたPC","TOWNSのCD-ROM機能だけを残した廉価版"],a:0,e:"FMV-TOWNSはFMV（PC/AT互換機）のPCIスロットにTOWNSカードを搭載したハイブリッド機で、FMVとFM TOWNSを融合させた苦肉の製品でした。"},
+  {type:'4',q:"FM TOWNSが旺文社と共同で実施したソフトウェアコンテストの成果として行われた取り組みはどれですか？",o:["自由ソフトをCD-ROMで実費配布","年間100本以上のゲームソフト無償提供","全ユーザーへのハードウェア無償アップグレード","学校法人への本体無償配布"],a:0,e:"FM TOWNSは旺文社と共同でソフトウェアコンテストを実施し、ユーザーから集めた自由ソフトをCD-ROMで実費配布するという当時としてはユニークな取り組みを行いました。"},
+  {type:'ox',q:"FM TOWNS マーティーは家庭用テレビに接続して使用することができた。",o:["○","×"],a:0,e:"マーティーはRGBの代わりにS端子を備えており、家庭用テレビへの接続に特化した設計でした。富士通のLIST方式により640×480ドットの画像をテレビで表示できました。"},
+  {type:'4',q:"FM TOWNSのCPU選定においてi80386（32ビット）を採用した主な理由はどれですか？",o:["4GBの広大なリニアアドレス空間を活用したリッチなコンテンツ開発のため","コストが最も安かったから","国産CPUとの互換性のため","既存のFMシリーズとの互換性維持のため"],a:0,e:"ソフトウェアメーカーから「80386ネイティブモードで4GBの広大なリニアアドレス空間を使えばリッチなコンテンツ開発が可能」という要望があったことがi80386採用の決め手となりました。"},
+  {type:'4',q:"FM TOWNSのサウンド機能でFM-7シリーズから引き継いだ音源はどれですか？",o:["FM音源（YM2612相当）","PSG音源","PCM音源","MIDI音源"],a:0,e:"FM TOWNSにはPCM音源に加えFM音源（YM2612のCSMモード相当）も搭載されていました。FM77AVから引き継いだFM音源文化がTOWNSにも継続されました。"},
+  {type:'ox',q:"FM TOWNS II Fresh・TVはパソコンでテレビ視聴を可能にした製品で、テレビパソコンのパイオニアとされている。",o:["○","×"],a:0,e:"1994年5月発売のFM TOWNS II Fresh・TVはステレオ音声多重チューナーを搭載し、今日で言う「テレビパソコン」のパイオニアとされています。"},
+  {type:'4',q:"FM TOWNS発売時の専用ソフトウェアのラインアップ本数はおよそ何本でしたか？",o:["27種類","100本以上","5本","200本以上"],a:0,e:"FM TOWNS発売時には27種類のCD-ROMソフトが用意されていましたが、当時のPC-9800シリーズ対応32ビット向けアプリが100本以上あったため、ソフトの品揃えで劣勢でした。"},
+  {type:'4',q:"FM TOWNS マーティーのCPUクロック周波数はどれくらいでしたか？",o:["16MHz（80386SX相当）","33MHz","8MHz","66MHz"],a:0,e:"マーティーのCPUは80386SX相当品でクロック周波数16MHzでした。これは初代FM TOWNSと同程度の性能でした。"},
+  {type:'ox',q:"FM TOWNSの発売発表会に集まった報道陣は約200人で、当時としては異例の多さだった。",o:["○","×"],a:0,e:"1989年2月28日の発表会場には約200人の報道陣が集まり、パソコン発表会としては当時極めて異例の注目を集めました。"},
+  {type:'4',q:"FM TOWNSシリーズの発売5周年記念モデルの名称はどれですか？",o:["Fresh（フレッシュ）","SX","Anniversary","Prime"],a:0,e:"1994年春に発売されたFM TOWNS発売5周年記念モデルは「MF/Fresh」シリーズです。本体色が白（白TOWNS）に変更されました。"},
+  {type:'4',q:"FM TOWNS（初代）の発売発表が行われた東京の場所はどこですか？",o:["丸の内センタービル20階の大会議室","日本武道館","NHKホール","東京国際フォーラム"],a:0,e:"FM TOWNSの発表は1989年2月28日に当時の富士通本社があった東京・丸の内の丸の内センタービル20階大会議室で行われました。"},
+  {type:'ox',q:"FM TOWNS マーティーの搭載メモリは4MBで増設可能だった。",o:["○","×"],a:1,e:"マーティーの搭載メモリは2MBで、増設不可でした。FM TOWNSの標準が2MBだったため制限を受けるソフトもありました。"},
+],
+
+/* ── FMRシリーズ（20問） ── */
+fmr:[
+  {type:'4',q:"FMRシリーズが発売開始されたのはいつですか？",o:["1987年2月","1981年","1990年","1993年"],a:0,e:"FMRシリーズは1987年2月に発売が開始されました。富士通のビジネス向けPCの前身FM-16βの後継機として登場しました。"},
+  {type:'4',q:"FMRシリーズはどのような用途向けのPCとして位置づけられていましたか？",o:["ビジネス向けPC（業務用）","ホビー向けゲームPC","科学計算専用PC","学校教育向けPC"],a:0,e:"FMRシリーズは富士通のビジネス向けパーソナルコンピューターとして、企業・オフィスでの業務利用を主な用途として展開されていました。"},
+  {type:'ox',q:"FMRシリーズはFMVシリーズの登場後も1998年まで販売が続いた。",o:["○","×"],a:0,e:"FMRシリーズはFMVが登場した1993年以降もラインナップを縮小しながら販売を続け、最終機種のFMR-280A4/L4・FMR-250L4が1998年4月に発売されました。"},
+  {type:'4',q:"FMRシリーズのアーキテクチャで採用されていたCPU系統はどれですか？",o:["x86系CPU（Intel互換）","モトローラ68000系","RISC CPU（SPARC）","独自CPU"],a:0,e:"FMRシリーズはFM-16βから引き続きx86系CPUを採用し、OSにはMS-DOSを標準採用していました。"},
+  {type:'4',q:"FMRシリーズのMS-DOSのメモリ空間は他機種と比べてどのような特徴がありましたか？",o:["他機種の640KBより若干多い768KBを連続確保できた","他機種と同じ640KB","512KBと少なかった","1MBを超えていた"],a:0,e:"FMRシリーズのMS-DOSメモリ空間は他機種の標準640KBより若干多い768KBを連続して確保できるという独自の特徴がありました。"},
+  {type:'ox',q:"FMRシリーズの前身であるFM-16βの標準OSはCP/M-86だった。",o:["○","×"],a:0,e:"FMRの前身FM-16βは当初CP/M-86を標準OSとしたため、ソフトウェアの品揃えに恵まれませんでした。後にMS-DOSも発売されました。"},
+  {type:'4',q:"FMR-70HXシリーズが対応を想定していた先進的なOSはどれですか？",o:["富士通 日本語MS OS/2","MS-DOS 6.2","Windows NT","UNIX"],a:0,e:"FMR-70HX3は富士通 日本語MS OS/2（Ver.1.0）の動作を想定したスペックが商品カタログで強調されており、OS/2専用キー配列のキーボードも選択可能でした。"},
+  {type:'4',q:"FMRシリーズで初めて80486 CPUを搭載した機種はどのシリーズですか？",o:["FMR-280シリーズ","FMR-70シリーズ","FMR-50シリーズ","FMR-CARD"],a:0,e:"FMRシリーズとして初めてCPUに80486を搭載したのはFMR-280シリーズです。基本アーキテクチャはFMR-70と変わりませんでした。"},
+  {type:'ox',q:"FMRシリーズの一部機種は松下電器（現パナソニック）にOEM提供されていた。",o:["○","×"],a:0,e:"FMRシリーズの一部機種は松下電器（現パナソニック）へOEM供給されていました。"},
+  {type:'4',q:"FMRシリーズに属する「FMR-CARD」はどのような特徴を持つ機種でしたか？",o:["質量990g・A4サイズ・単3電池2本駆動のノートPC","タッチスクリーン搭載の小型機","デスクトップ専用機","サーバー用ラックマウント機"],a:0,e:"FMR-CARDは質量990g・厚さ26.5mm・単3乾電池2本で長時間駆動するA4ジャストサイズのノートPCで、80C286搭載のMS-DOS機として当時画期的でした。"},
+  {type:'4',q:"FMRシリーズが最終的にどのシリーズに統合・引き継がれましたか？",o:["FMVシリーズ","FM TOWNSシリーズ","ESPRIMOシリーズ","FM-11シリーズ"],a:0,e:"FMRシリーズはFMV（DOS/V機）の登場によりラインナップが縮小し、最終的にFMVシリーズに統合・引き継がれました。"},
+  {type:'ox',q:"FMRシリーズには液晶ディスプレイ一体型の省スペースデスクトップモデルも存在した。",o:["○","×"],a:0,e:"FMRシリーズには液晶ディスプレイ一体型の省スペースデスクトップ系列があり、640×400ドット・モノクロ2階調の表示を基本としたモデルが存在しました。"},
+  {type:'4',q:"FMRシリーズの各シリーズ間の互換性はどのように確保されていましたか？",o:["OSのシステムコール（FBIOS）で吸収","ハードウェアレベルで完全互換","専用エミュレータソフトで互換","互換性はなかった"],a:0,e:"FMRシリーズでは各シリーズ間の互換性はハードウェアではなく、OSのシステムコール（FBIOS）によって吸収する仕組みが採られていました。"},
+  {type:'4',q:"1992〜1994年にFMRシリーズの冠が付いたPC/AT互換機のPCサーバはどのような特徴でしたか？",o:["EISAバス対応のPC/AT互換アーキテクチャを採用","独自バスのFMR専用設計","富士通独自CPUを搭載","SCSI非対応"],a:0,e:"1992〜1994年にかけてFMRサーバシリーズとして、EISAバス対応のPC/AT互換アーキテクチャを採用したPCサーバが販売されました。"},
+  {type:'ox',q:"FMRシリーズはFM TOWNSの発売（1989年）後も継続販売された。",o:["○","×"],a:0,e:"FMRシリーズはビジネス向けPCとして、FM TOWNS発売後も1998年まで継続販売されました。ビジネス市場では独自の需要があったためです。"},
+  {type:'4',q:"FMRシリーズのPCサーバが1996年に統合・後継となったシリーズはどれですか？",o:["GRANPOWER 5000シリーズ","FMVサーバシリーズ","ESPRIMOサーバ","PrimeStar"],a:0,e:"FMRシリーズのPCサーバは1996年にGRANPOWER 5000シリーズに統合されました。"},
+  {type:'ox',q:"FMR-50系とFMR-CARDは基本的に互換性があった。",o:["○","×"],a:0,e:"FMR-CARDはFMR-50系と基本的な互換性を持っており、FMR-50向けのソフトウェアを活用できました。"},
+  {type:'4',q:"FMRシリーズで採用されていたキーボード入力方式として特に富士通が推進していたのはどれですか？",o:["親指シフトキーボード（NICOLA配列）","QWERTY配列のみ","JIS配列のみ","Dvorak配列"],a:0,e:"富士通は親指シフト（NICOLA配列）キーボードを積極的に推進しており、FMRシリーズでも親指シフトキーボードが選択肢として提供されていました。"},
+  {type:'4',q:"FMR-360SVシリーズの後継機（1994年）のCPUとして採用されたのはどれですか？",o:["486DX2・Pentium","80386","Celeron","Core i3"],a:0,e:"1994年6月に発表されたFMR-360SVの後継機にはCPUとして486DX2・Pentiumが採用され、最大384MBのメモリ対応など大幅な性能向上が図られました。"},
+  {type:'ox',q:"FMRシリーズの「FMR-70BX」以降のモデルはキーボードを本体に一体化収納できる構造を持っていた。",o:["○","×"],a:0,e:"FMR-30BX以降の一部モデルはキーボードを本体に一体化収納できる構造（キャリングハンドル付き）を持っていました。"},
+],
+
+/* ── その他製品（20問） ── */
+other:[
+  {type:'4',q:"FCCLが展開するタブレット端末のブランド名はどれですか？",o:["ARROWS Tab","FMV Tab","LIFEBOOK Tab","ESPRIMO Tab"],a:0,e:"FCCLはタブレット端末として「ARROWS Tab」シリーズを展開しています。スマートフォン用ARROWSブランドとも連動しています。"},
+  {type:'ox',q:"FCCLのARROWS Tabシリーズは法人向けにも展開されている。",o:["○","×"],a:0,e:"ARROWS Tabは個人向けだけでなく、法人向けの堅牢タブレットとしても展開されており、現場作業や医療・教育分野での利用も多いです。"},
+  {type:'4',q:"富士通が開発した日本語入力用の独自キーボード配列はどれですか？",o:["親指シフト（NICOLA配列）","QWERTY配列","Dvorak配列","コールマック配列"],a:0,e:"富士通が開発した親指シフト（NICOLA）配列は、日本語入力に最適化されたキーボード配列として広く知られており、FMRやFMVでも長く採用されてきました。"},
+  {type:'4',q:"FCCLが生産・販売するノートPCの製造拠点として知られる工場はどこですか？",o:["島根富士通（島根県出雲市）","富士通川崎工場","富士通大阪工場","富士通福岡工場"],a:0,e:"LIFEBOOK（FMVノートPC）は島根富士通（島根県出雲市）で生産されており、Made in Japanとしてのブランド価値を支えています。"},
+  {type:'ox',q:"富士通は理化学研究所と共同でスーパーコンピューター「富岳」を開発し、世界1位を獲得した。",o:["○","×"],a:0,e:"富士通と理化学研究所が共同開発したスーパーコンピューター「富岳」は、2020年のTOP500で世界1位を獲得しました。FCCLのPC技術とは別ですが、富士通グループの技術力を示しています。"},
+  {type:'4',q:"FCCLが提供するPCサポートで、有料で専門スタッフが自宅に訪問するサービスの名称はどれですか？",o:["PC家庭教師","PCドクター","FMVサポート訪問","テックサポート"],a:0,e:"「PC家庭教師」はFCCLが提供する有料の出張訪問サポートサービスで、自宅にスタッフが来てパソコンの設定や操作を支援してくれます。"},
+  {type:'4',q:"富士通が推進した「スーパーインポーズ」機能とは何ですか？",o:["パソコン画面とテレビ映像を合成して表示する機能","超高解像度のディスプレイ機能","複数OSを同時起動する機能","超高速データ転送機能"],a:0,e:"スーパーインポーズはパソコン画面とテレビなどの映像を合成して表示する機能です。FM-77やFM TOWNSのオプション機能として提供されていました。"},
+  {type:'ox',q:"富士通のPC関連製品はFCCLの設立後、すべてレノボのThinkPadブランドに統合された。",o:["○","×"],a:1,e:"FCCLはFMV・LIFEBOOK・ESPRIMOなど富士通ブランドを維持しており、ThinkPadブランドへの統合は行われていません。レノボグループ内でFMVブランドは独立して継続されています。"},
+  {type:'4',q:"FMV LIFEBOOKの軽量化において採用されている構造の特徴として正しいのはどれですか？",o:["補強フレームと本体側壁の一枚板構造","チタン合金のフレーム","カーボンファイバー製の全面ボディ","金属を一切使わない樹脂製構造"],a:0,e:"FMV LIFEBOOK（特に軽量モバイルモデル）では開閉時のゆがみを軽減する補強フレームと本体側壁の一枚板構造を採用し、薄型軽量と耐久性を両立しています。"},
+  {type:'4',q:"FCCLの製品「STYLISTIC」シリーズはどのような製品ですか？",o:["法人向けWindowsタブレット・2 in 1 PC","個人向けゲーミングPC","スタイリッシュデザインのノートPC","フォルダブルディスプレイPC"],a:0,e:"STYLISTICはFCCLが展開する法人向けWindowsタブレット・2 in 1 PCシリーズです。堅牢性と携帯性を重視した業務用端末として展開されています。"},
+  {type:'ox',q:"FCCLはFMVブランドで販売する個人向けPCにカスタマイズオプションを提供している。",o:["○","×"],a:0,e:"FCCLはFMVのカスタムメイドモデルを提供しており、CPU・メモリ・ストレージなどの構成を購入者が選択できます。"},
+  {type:'4',q:"FCCLが展開するPCブランドの中で、特に「シニア向け」として展開されているのはどれですか？",o:["らくらくパソコン","FMV Nano","ESPRIMO Mini","LIFEBOOK Kids"],a:0,e:"「らくらくパソコン」はFCCLが展開するシニア向けのFMVシリーズで、大きな文字・わかりやすい操作・サポート体制が特徴です。"},
+  {type:'4',q:"FCCLが製品に搭載する生体認証機能として広く採用されているのはどれですか？",o:["指静脈認証","虹彩認証","声紋認証","歩行認証"],a:0,e:"FCCLは手のひら・指静脈認証をはじめとする生体認証機能をFMV・LIFEBOOKに搭載しており、特に静脈認証技術は富士通グループが長年推進してきた技術です。"},
+  {type:'ox',q:"FCCLのFMV製品は川崎市のふるさと納税返礼品に採用されたことがある。",o:["○","×"],a:0,e:"2025年8月にFCCLのFMV製品が川崎市のふるさと納税返礼品に採用されたと発表されました。FCCLの本社・R&Dセンターが川崎市にあることが縁となっています。"},
+  {type:'4',q:"富士通が学習用マイコンとして発売したFM-8の前身製品（1977年）はどれですか？",o:["LKIT-8","FM-1","BASIC-8","FM-X"],a:0,e:"富士通は1977年3月に学習用マイクロコンピュータ「LKIT-8」を発売しており、これがFM-8（1981年）へと発展する原点となりました。"},
+  {type:'4',q:"富士通が発売したMSX規格パソコン「FM-X」はどのような位置づけでしたか？",o:["FM-7との連携動作が可能なMSX規格機","FM TOWNSの廉価版","FMRの教育機向けバリアント","FM-8の後継機"],a:0,e:"FM-Xは富士通が発売したMSX規格のパソコンで、FM-7と連携動作を可能とするインターフェースボードも発売されていました。"},
+  {type:'ox',q:"FCCLは2026年にFMV Keyboard Xのクラウドファンディングを開始した。",o:["○","×"],a:0,e:"FCCLは2026年4月8日に磁気スイッチ×静音設計×ロープロファイルの「FMV Keyboard X」のクラウドファンディングを開始しました。"},
+  {type:'4',q:"富士通のパソコン「FACOM9450」が発売されたのはいつですか？",o:["1981年","1977年","1985年","1990年"],a:0,e:"富士通は1981年にFACOM9450を発売しており、FM-8の発売とともに本格的なパソコン事業がスタートしました。"},
+  {type:'4',q:"FCCLが2025年6月に開催した「富士通FMVパソコン組み立て教室」は何回目でしたか？",o:["第18回","第5回","第30回","第1回"],a:0,e:"2025年6月23日に開催された「富士通FMVパソコン組み立て教室」は第18回で、親子を対象にファンレス（静音）ノートPCの組み立てを体験するイベントでした。"},
+  {type:'ox',q:"FCCLのFMV製品はTwitter（現X）のアカウントへの質問でもサポートを受けることができる。",o:["○","×"],a:0,e:"FCCLのFMVサポートはメール・電話のほか、公式TwitterアカウントへのDMや質問にも対応しており、多様なチャネルでのサポートを提供しています。"},
+],
+
+};
+
+/* ══════════════════════════════════════════════════
+   ゲームロジック
+══════════════════════════════════════════════════ */
+const GENRE_NAMES = {company:"会社・歴史・沿革",fmv:"FMVシリーズ",fm:"FMシリーズ",towns:"FM TOWNSシリーズ",fmr:"FMRシリーズ",other:"その他製品"};
+const GENRE_ICONS = {company:"🏢",fmv:"🖥️",fm:"📟",towns:"🎮",fmr:"💼",other:"📱"};
+const TOTAL_Q=10, TIME_START=120, TIME_CORRECT=5, TIME_WRONG=5, POINT_CORRECT=10;
+
+let currentGenre=null, playerName="", questions=[], qIndex=0, score=0, timeLeft=0;
+let timerInterval=null, wrongList=[], answered=false;
+
+function selectGenre(g){
+  currentGenre=g;
+  document.getElementById('name-badge').textContent=`${GENRE_ICONS[g]} ${GENRE_NAMES[g]}`;
+  document.getElementById('name-genre-title').textContent=`${GENRE_NAMES[g]}クイズ`;
+  showScreen('name-screen');
+}
+
+function startQuiz(){
+  playerName=document.getElementById('player-name').value.trim()||"プレイヤー";
+  questions=shuffle([...DB[currentGenre]]).slice(0,TOTAL_Q);
+  qIndex=0; score=0; timeLeft=TIME_START; wrongList=[];
+  showScreen('quiz-screen');
+  startTimer();
+  renderQuestion();
+}
+
+function renderQuestion(){
+  answered=false;
+  const q=questions[qIndex];
+  const isOX=q.type==='ox';
+  document.getElementById('q-num').textContent=`Q${qIndex+1} / ${TOTAL_Q}`;
+  document.getElementById('q-score').textContent=`${score} pt`;
+  document.getElementById('progress-fill').style.width=`${(qIndex/TOTAL_Q)*100}%`;
+  document.getElementById('cat-tag').innerHTML=
+    GENRE_NAMES[currentGenre]+
+    `<span class="qtype-badge ${isOX?'qtype-ox':'qtype-4'}">${isOX?'○×':'4択'}</span>`;
+  document.getElementById('question-text').textContent=q.q;
+
+  const area=document.getElementById('options-area');
+  if(isOX){
+    area.innerHTML=`
+      <div class="ox-grid">
+        <button class="ox-btn maru" onclick="selectOX(0)">○</button>
+        <button class="ox-btn batsu" onclick="selectOX(1)">×</button>
+      </div>`;
+  } else {
+    const labels=['A','B','C','D'];
+    const shuffled=shuffleWithIndex(q.o);
+    area.innerHTML=`<div class="options-grid" id="options-grid"></div>`;
+    area._answerMap=shuffled.map(x=>x.orig);
+    const grid=area.querySelector('#options-grid');
+    grid._answerMap=shuffled.map(x=>x.orig);
+    shuffled.forEach((item,i)=>{
+      const btn=document.createElement('button');
+      btn.className='option-btn';
+      btn.innerHTML=`<span class="opt-label">${labels[i]}</span><span>${item.text}</span>`;
+      btn.onclick=()=>selectAnswer(i,grid._answerMap,q);
+      grid.appendChild(btn);
+    });
+  }
+
+  document.getElementById('feedback').className='feedback';
+  document.getElementById('feedback').innerHTML='';
+  const nb=document.getElementById('next-btn');
+  nb.className='next-btn';
+  nb.textContent=qIndex<TOTAL_Q-1?'次の問題へ →':'結果を見る';
+}
+
+function shuffleWithIndex(arr){return arr.map((text,i)=>({text,orig:i})).sort(()=>Math.random()-.5);}
+
+function selectAnswer(selectedIdx,answerMap,q){
+  if(answered)return;
+  answered=true;
+  const isCorrect=answerMap[selectedIdx]===q.a;
+  const btns=document.querySelectorAll('.option-btn');
+  btns.forEach((btn,i)=>{
+    btn.disabled=true;
+    if(answerMap[i]===q.a) btn.classList.add('correct');
+    else if(i===selectedIdx&&!isCorrect) btn.classList.add('wrong');
+  });
+  applyResult(isCorrect,q,q.o[q.a],isCorrect?null:q.o[answerMap[selectedIdx]]);
+}
+
+function selectOX(selectedIdx){
+  if(answered)return;
+  answered=true;
+  const q=questions[qIndex];
+  const isCorrect=selectedIdx===q.a;
+  const btns=document.querySelectorAll('.ox-btn');
+  btns.forEach((btn,i)=>{
+    btn.disabled=true;
+    if(i===q.a) btn.classList.add('correct');
+    else if(i===selectedIdx&&!isCorrect) btn.classList.add('wrong');
+  });
+  applyResult(isCorrect,q,q.o[q.a],isCorrect?null:q.o[selectedIdx]);
+}
+
+function applyResult(isCorrect,q,correctText,myText){
+  const fb=document.getElementById('feedback');
+  if(isCorrect){
+    score+=POINT_CORRECT;
+    timeLeft=Math.min(timeLeft+TIME_CORRECT,999);
+    fb.className='feedback correct-fb show';
+    fb.innerHTML=`<span class="fb-head">✅ 正解！ <span class="time-badge time-plus">＋${TIME_CORRECT}秒</span></span>${q.e}`;
+  } else {
+    timeLeft=Math.max(timeLeft-TIME_WRONG,0);
+    fb.className='feedback wrong-fb show';
+    fb.innerHTML=`<span class="fb-head">❌ 正解は「${correctText}」<span class="time-badge time-minus">−${TIME_WRONG}秒</span></span>${q.e}`;
+    wrongList.push({q:q.q,myAns:myText||'（未回答）',correct:correctText,exp:q.e});
+  }
+  document.getElementById('q-score').textContent=`${score} pt`;
+  document.getElementById('next-btn').classList.add('show');
+}
+
+function nextQuestion(){
+  qIndex++;
+  if(qIndex>=TOTAL_Q) endQuiz(false);
+  else renderQuestion();
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  updateTimerDisplay();
+  timerInterval=setInterval(()=>{
+    timeLeft--;
+    updateTimerDisplay();
+    if(timeLeft<=0){clearInterval(timerInterval);endQuiz(true);}
+  },1000);
+}
+function updateTimerDisplay(){
+  const el=document.getElementById('timer-num');
+  el.textContent=timeLeft;
+  el.className='timer-num'+(timeLeft<=20?' warn':'');
+}
+function endQuiz(timeUp){
+  clearInterval(timerInterval);
+  const bonus=timeUp?0:timeLeft;
+  showResult(score+bonus,bonus,timeUp);
+}
+
+function showResult(total,bonus,timeUp){
+  showScreen('result-screen');
+  const correctCount=score/POINT_CORRECT;
+  const pct=correctCount/TOTAL_Q;
+  let emoji,title,msg;
+  if(timeUp){emoji='⏰';title='時間切れ！';msg='惜しかった！次回はもっと速く答えて再挑戦！';}
+  else if(pct===1){emoji='🏆';title='FCCL博士！';msg='満点！FMシリーズからFMVまで完璧に理解しています。';}
+  else if(pct>=.7){emoji='💻';title='PC通！';msg='素晴らしい知識です。富士通PCの歴史をよく知っていますね！';}
+  else if(pct>=.4){emoji='📟';title='もう少し！';msg='間違えた問題を振り返って、さらに知識を深めましょう！';}
+  else{emoji='🖥️';title='これから勉強しよう！';msg='FMVの歴史・FMシリーズなどをじっくり調べてみてください！';}
+
+  document.getElementById('result-emoji').textContent=emoji;
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-player').textContent=`${playerName} さんの結果`;
+  document.getElementById('r-total').textContent=total;
+  document.getElementById('r-correct').textContent=`${correctCount} / ${TOTAL_Q}`;
+  document.getElementById('r-bonus').textContent=`+${bonus}`;
+  document.getElementById('result-msg').textContent=msg;
+  showRankingSaveUI(currentGenre,total,correctCount,bonus);
+
+  const ws=document.getElementById('wrong-section');
+  if(wrongList.length===0){
+    ws.innerHTML='<p style="color:#6ee7b7;font-size:15px;text-align:center;">間違えた問題はありません 🎉</p>';
+  } else {
+    ws.innerHTML=`<h3>❌ 間違えた問題（${wrongList.length}問）</h3>`+
+      wrongList.map((w,i)=>`
+        <div class="wrong-item">
+          <div class="wi-q">Q${i+1}. ${w.q}</div>
+          <div class="wi-wrong">あなたの答え：${w.myAns}</div>
+          <div class="wi-correct">✅ 正解：${w.correct}</div>
+          <div class="wi-exp">${w.exp}</div>
+        </div>`).join('');
+  }
+}
+
+function retryQuiz(){startQuiz();}
+function goTop(){clearInterval(timerInterval);showScreen('top-screen');}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function shuffle(arr){return arr.sort(()=>Math.random()-.5);}
+
+/* ══════════════════════════════════════════════════
+   ローカルランキング（localStorage）
+══════════════════════════════════════════════════ */
+const RANK_MAX=20;
+const LS_PREFIX='fccl_quiz_rank_';
+
+function dateStr(){
+  const d=new Date();
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+function loadList(genre){try{return JSON.parse(localStorage.getItem(LS_PREFIX+genre)||'[]');}catch(e){return[];}}
+function saveList(genre,list){localStorage.setItem(LS_PREFIX+genre,JSON.stringify(list));}
+function saveRanking(genre,name,total,correct,bonus){
+  const list=loadList(genre);
+  const entry={name,total,correct,bonus,date:dateStr()};
+  list.push(entry);
+  list.sort((a,b)=>b.total-a.total||b.correct-a.correct);
+  const trimmed=list.slice(0,RANK_MAX);
+  saveList(genre,trimmed);
+  return trimmed.findIndex(e=>e.name===name&&e.total===total&&e.correct===correct&&e.date===entry.date)+1;
+}
+
+let rankingCurrentGenre='company';
+function showRanking(genre){
+  genre=genre||rankingCurrentGenre;
+  rankingCurrentGenre=genre;
+  showScreen('ranking-screen');
+  document.querySelectorAll('.genre-tab').forEach(t=>t.classList.toggle('active',t.dataset.genre===genre));
+  renderRankingList(genre);
+}
+function switchRankingTab(genre){
+  rankingCurrentGenre=genre;
+  document.querySelectorAll('.genre-tab').forEach(t=>t.classList.toggle('active',t.dataset.genre===genre));
+  renderRankingList(genre);
+}
+function renderRankingList(genre){
+  const el=document.getElementById('ranking-list');
+  const list=loadList(genre);
+  if(!list.length){el.innerHTML='<div class="ranking-empty">まだ記録がありません。<br>最初のプレイヤーになろう！💻</div>';return;}
+  const medals=['🥇','🥈','🥉'];
+  el.innerHTML=list.map((e,i)=>{
+    const rc=i===0?'top1':i===1?'top2':i===2?'top3':'';
+    const nc=i===0?'g1':i===1?'g2':i===2?'g3':'gn';
+    return `<div class="ranking-row ${rc}">
+      <div class="rank-num ${nc}">${i+1}</div>
+      <div class="rank-medal">${medals[i]||''}</div>
+      <div class="rank-info">
+        <div class="rank-name">${escHtml(e.name)}</div>
+        <div class="rank-detail">正解 ${e.correct}/${TOTAL_Q}問 ／ ボーナス +${e.bonus} ／ ${e.date}</div>
+      </div>
+      <div class="rank-score">${e.total}<span>pt</span></div>
+    </div>`;
+  }).join('');
+}
+function escHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+function showRankingSaveUI(genre,total,correct,bonus){
+  document.getElementById('ranking-save-area').innerHTML=`
+    <div style="background:rgba(232,184,75,.1);border:1.5px solid rgba(232,184,75,.3);border-radius:14px;padding:18px 20px;">
+      <div style="font-family:'Noto Serif JP',serif;font-size:15px;font-weight:700;color:var(--gold);margin-bottom:12px;">🏆 ランキングに登録する</div>
+      <button id="rank-save-btn" onclick="doSaveRanking('${genre}',${total},${correct},${bonus})"
+        style="width:100%;background:linear-gradient(135deg,var(--gold),#b88a20);color:#fff;border:none;border-radius:10px;padding:14px;font-family:'Noto Sans JP',sans-serif;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1.5px;">
+        スコアを登録する（${total}pt）
+      </button>
+      <p style="font-size:11px;color:var(--mist);opacity:.5;margin-top:8px;">※ この端末のブラウザに保存されます</p>
+    </div>`;
+}
+function doSaveRanking(genre,total,correct,bonus){
+  const rank=saveRanking(genre,playerName,total,correct,bonus);
+  document.getElementById('ranking-save-area').innerHTML=`
+    <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:16px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:6px;">🎉</div>
+      <div style="font-family:'Noto Serif JP',serif;font-size:17px;font-weight:700;color:#6ee7b7;">ランキング ${rank}位 に登録しました！</div>
+      <div style="font-size:13px;color:var(--mist);opacity:.7;margin-top:6px;">${total}pt ／ ${GENRE_NAMES[genre]}</div>
+    </div>`;
+}
+function clearRanking(){
+  if(!confirm(`「${GENRE_NAMES[rankingCurrentGenre]}」の全記録を削除しますか？`))return;
+  localStorage.removeItem(LS_PREFIX+rankingCurrentGenre);
+  renderRankingList(rankingCurrentGenre);
+}
+</script>
+</body>
+</html>
